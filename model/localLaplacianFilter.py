@@ -26,13 +26,17 @@ class LocalLaplacianFilter:
             for x in range(h):
                 for y in range(w):
                     g = gpLayer[x, y]
-                    startX, endX, startY, endY = self.subregion(img, l, x, y)    # TODO Implement method for computng subregion R
 
-                    intermediateImg = img.clone()               # Intermediate image representation
+                    intermediateImg = img.copy()               # Intermediate image representation
 
-                    for m in range(startX, endX):
-                        for n in range(startY, endY):
+                    for m in range(h):
+                        for n in range(w):
                             intermediateImg[m, n] = self.mapping(img[m, n], g, self.sigma)
+
+                    # startX, endX, startY, endY = self.subregion(img, l, x, y)  # TODO Implement method for computng subregion R
+                    # for m in range(startX, endX):                              # TODO (This is only for efficiency)
+                    #     for n in range(startY, endY):
+                    #         intermediateImg[m, n] = self.mapping(img[m, n], g, self.sigma)
 
                     lpIntermediate = self.computeLaplacianPyramid(intermediateImg, self.levels)     # Intermediate Laplacian pyramid
                     lpOutLayer[x, y] = lpIntermediate[l][x, y]
@@ -68,6 +72,7 @@ class LocalLaplacianFilter:
             G = cv2.pyrDown(G)
             gpImg.append(G)
 
+        gpImg.reverse()
         return gpImg
 
     def computeLaplacianPyramid(self, img, l: int):
@@ -108,12 +113,12 @@ class LocalLaplacianFilter:
         :return: Tuple of 4 integers where:
         a -> start of R in x direction
         b -> end of R x direction
-        c -> start of R in x direction
+        c -> start of R in y direction
         d -> end of R in y direction
         """
         a, b, c, d = 0
 
-        return (a, b, c, d)
+        return a, b, c, d
 
 
 

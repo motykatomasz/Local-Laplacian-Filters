@@ -6,8 +6,9 @@ from model import LocalLaplacianFilter
 
 # Input parameters
 config = OrderedDict(
-    img_path='abc',
-    mapping_func='abc',
+    img_path='data/lena_gray_mini.png',
+    mapping_func='mapping1',
+    levels=3,
     sigma=0.0,
     alpha=0.0,
     beta=0.0
