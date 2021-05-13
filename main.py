@@ -1,7 +1,7 @@
 import time
 from collections import OrderedDict
 
-from utils import parse_cli_overides, readImage
+from utils import parse_cli_overides, readImage, showImg
 from model import LocalLaplacianFilter
 
 # Input parameters
@@ -25,6 +25,8 @@ def main():
     end = time.time()
 
     print('Algorithm ran for: {:.4f} seconds.'.format(end - start), flush=True)
+
+    showImg(new_img)
 
 
 if __name__ == "__main__":
