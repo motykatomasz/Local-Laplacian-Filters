@@ -1,10 +1,13 @@
 import cv2
 import numpy as np
 
-from .mappings import mapping1, mapping2
+from .mappings import grayscaleR, colorR
 
 
 class LocalLaplacianFilter:
+    """
+    Class representing Laplacian Local Filtering Algorithm
+    """
     def __init__(self, config: dict):
         self.levels = config['levels']
         self.sigma = config['sigma']
@@ -26,17 +29,11 @@ class LocalLaplacianFilter:
             for x in range(h):
                 for y in range(w):
                     g = gpLayer[x, y]
-
                     intermediateImg = img.copy()               # Intermediate image representation
 
                     for m in range(h):
                         for n in range(w):
-                            intermediateImg[m, n] = self.mapping(img[m, n], g, self.sigma)
-
-                    # startX, endX, startY, endY = self.subregion(img, l, x, y)  # TODO Implement method for computng subregion R
-                    # for m in range(startX, endX):                              # TODO (This is only for efficiency)
-                    #     for n in range(startY, endY):
-                    #         intermediateImg[m, n] = self.mapping(img[m, n], g, self.sigma)
+                            intermediateImg[m, n] = self.mapping(img[m, n], g, self.sigma)          # TODO Implement method for computng subregion R
 
                     lpIntermediate = self.computeLaplacianPyramid(intermediateImg, self.levels)     # Intermediate Laplacian pyramid
                     lpOutLayer[x, y] = lpIntermediate[l][x, y]
@@ -45,7 +42,6 @@ class LocalLaplacianFilter:
 
         return self.reconstructLaplacianPyramid(lpOut, self.levels)
 
-
     def getMappingFunction(self, func: str):
         """
         Returns function object of the mapping function.
@@ -53,8 +49,8 @@ class LocalLaplacianFilter:
         :return: Function object
         """
         model = {
-            "mapping1": lambda: mapping1,
-            "mapping2": lambda: mapping2
+            "grayscale": lambda: grayscaleR,
+            "color": lambda: colorR
         }
 
         return model[func]()
