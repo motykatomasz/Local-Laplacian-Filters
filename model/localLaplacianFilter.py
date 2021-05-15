@@ -12,6 +12,9 @@ class LocalLaplacianFilter:
         self.levels = config['levels']
         self.sigma = config['sigma']
         self.mapping = self.getMappingFunction(config['mapping_func'])          # TODO Implement mapping functions
+        self.alpha = config['alpha']
+        self.beta = config['beta']
+
 
     def run(self, img):
         """
@@ -33,14 +36,14 @@ class LocalLaplacianFilter:
 
                     for m in range(h):
                         for n in range(w):
-                            intermediateImg[m, n] = self.mapping(img[m, n], g, self.sigma)          # TODO Implement method for computng subregion R
+                            intermediateImg[m, n] = self.mapping(img[m, n], g, self.sigma)          # TODO Implement method for computing subregion R
 
                     lpIntermediate = self.computeLaplacianPyramid(intermediateImg, self.levels)     # Intermediate Laplacian pyramid
                     lpOutLayer[x, y] = lpIntermediate[l][x, y]
 
             lpOut.append(lpOutLayer)
 
-        return self.reconstructLaplacianPyramid(lpOut, self.levels)
+        return self.reconstructLaplacianPyramid(lpOut)
 
     def getMappingFunction(self, func: str):
         """
@@ -88,15 +91,16 @@ class LocalLaplacianFilter:
         return lpImg
 
 
-    def reconstructLaplacianPyramid(self, lp, l:int):
+    def reconstructLaplacianPyramid(self, lp):
         """
         Reconstructs image from Laplacian Pyramid.
         :param lp: Laplacian Pyramid
         :param l: Number of levels
         :return: Reconstructed image
         """
+        l = len(lp)
         reconstruction = lp[0]
-        for i in range(1, l + 1):
+        for i in range(1, l):
             reconstruction = cv2.pyrUp(reconstruction)
             reconstruction = cv2.add(reconstruction, lp[i])
 

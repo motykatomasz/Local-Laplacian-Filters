@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def grayscaleR(i, g, sigma):
     """
     Remapping function for gray-scale images.
@@ -8,10 +9,16 @@ def grayscaleR(i, g, sigma):
     :param sigma: User-defined parameter
     :return:
     """
+
+    i = i.astype(np.int)
+    g = g.astype(np.int)
+
     if np.abs(i-g) <= sigma:
-        return _grayscaleRd(i, g, sigma)
+        return _grayscaleRd(i, g, sigma).astype(np.uint8)
     else:
-        return _grayscaleRe(i, g, sigma)
+        return _grayscaleRe(i, g, sigma).astype(np.uint8)
+
+
 
 
 # TODO
@@ -43,21 +50,22 @@ def _grayscaleRe(i, g, sigma):
     return g + np.sign(i-g) * (_fe(np.abs(i-g)-sigma) + sigma)
 
 
-# TODO
+
 def _fd(i):
     """
-    Smooth function mapping between [0, 1] and [0, 1]
+    Smooth detail mapping for Detail Manipulation (5.2 in the paper)
     :param i: Value to map
     :return: Mapped value
     """
-    ...
+    _alpha = 0.8
+    return np.power(i, _alpha)
 
 
 # TODO
 def _fe(i):
     """
-    Smooth nonegative function defined over [0, inf)
+    Smooth edge mapping for Detail Manipulation (5.2 in the paper)
     :param i: Value to map
     :return: Mapped value
     """
-    ...
+    return i
