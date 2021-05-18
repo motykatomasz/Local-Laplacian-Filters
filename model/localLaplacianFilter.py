@@ -106,8 +106,8 @@ class LocalLaplacianFilter:
 
         return reconstruction
 
-    # TODO
-    def subregion(self, img, l: int, x: int, y: int):
+
+    def subregion(self, img, l: int, x: int, y: int, w: int, h: int):
         """
         Computes the subregion R of original image based on level 'l' and position (x,y).
         :return: Tuple of 4 integers where:
@@ -115,10 +115,56 @@ class LocalLaplacianFilter:
         b -> end of R x direction
         c -> start of R in y direction
         d -> end of R in y direction
+
+        Assumes the laplacian sub-sampling is 5x5
         """
-        a, b, c, d = 0
+        # define the size of sub-region according to section 4
+        # try to define a kxk region around x, y
+        k = 3*(2**(l+2) - 1)
 
-        return a, b, c, d
+        # starts and ends  in x and y direction
 
+        a = np.floor(x - 0.5*(k-1))
+        b = np.ceil(x + 0.5*(k-1))
+        c = np.floor(y - 0.5*(k-1))
+        d = np.ceil(y + 0.5*(k-1))
 
+        # if start_x extends outside image
+        # try to accomodate extra pixels on right side of x
+        if a < 0:
+            # if right side cannot accomodate extra pixels
+            # set start_x and end_x to edges of image
+            if b + np.abs(a) >= w:
+                a = 0
+                b = w - 1
+            # if right side can accomodate extra pixels
+            # set start_x to left edge, extend end_x
+            else:
+                b = b + np.abs(a)
+                a = 0
+        # if end_x extends outside image
+        # try to accomodate extra pixels on right side of x
+        elif b >= w:
+            if a - (b - (w - 1)) < 0:
+                a = 0
+                b = w - 1
+            else:
+                a = a - (b - (w - 1))
+                b = w - 1
 
+        if c < 0:
+            if d + np.abs(c) >= h:
+                c = 0
+                d = h - 1
+            else:
+                d = d + np.abs(c)
+                c = 0
+        elif d >= h:
+            if c - (d - (h - 1)) < 0:
+                c = 0
+                d = h - 1
+            else:
+                c = c - (d - (h - 1))
+                d = h - 1
+
+        return img[a:b, c:d]
