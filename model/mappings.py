@@ -19,9 +19,6 @@ def grayscaleR(i, g, sigma):
         return _grayscaleRe(i, g, sigma).astype(np.uint8)
 
 
-
-
-# TODO
 def colorR(i, g, sigma):
     """
         Remapping function for color images.
@@ -30,7 +27,19 @@ def colorR(i, g, sigma):
     :param sigma:
     :return:
     """
-    ...
+
+    i = i.astype(np.int)
+    g = g.astype(np.int)
+
+    # Eq 3a, 3b:
+    # details are within sphere of radius sigma centered at g
+    # edges are outside sphere
+    # eq for points inside sphere: sqrt((x-cx)^2 + (y-cy)^2 + (z-cz)^2) <= R^2
+    # (cx, cy, cz) is center
+    if np.linalg.norm(i-g) <= np.sqrt(sigma):
+        _colorRd(i, g, sigma).astype(np.uint8)
+    else:
+        _colorRe(i, g, sigma).astype(np.uint8)
 
 
 # TODO
@@ -49,6 +58,31 @@ def _grayscaleRe(i, g, sigma):
     """
     return g + np.sign(i-g) * (_fe(np.abs(i-g)-sigma) + sigma)
 
+
+def _colorRd(i, g, sigma):
+    """
+    Remapping function for color images.
+    :return:
+    """
+    if np.all(i-g == 0):
+        unit = np.zeros_like(i)
+    else:
+        unit = (i-g)/np.linalg.norm(i-g)
+
+    return g + unit * sigma * _fd(np.linalg.norm(i-g)/sigma)
+
+
+def _colorRe(i, g, sigma):
+    """
+    Remapping function for color images.
+    :return:
+    """
+    if np.all(i-g == 0):
+        unit = np.zeros_like(i)
+    else:
+        unit = (i-g)/np.linalg.norm(i-g)
+
+    return g + unit * (_fe(np.linalg.norm(i-g)-sigma) + sigma)
 
 
 def _fd(i):
