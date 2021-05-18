@@ -85,7 +85,7 @@ class LocalLaplacianFilter:
         lpImg = [gpImg[0]]
         for i in range(l):
             GE = cv2.pyrUp(gpImg[i])
-            L = cv2.subtract(gpImg[i + 1], GE)
+            L = gpImg[i + 1] - GE
             lpImg.append(L)
 
         return lpImg
@@ -102,7 +102,7 @@ class LocalLaplacianFilter:
         reconstruction = lp[0]
         for i in range(1, l):
             reconstruction = cv2.pyrUp(reconstruction)
-            reconstruction = cv2.add(reconstruction, lp[i])
+            reconstruction = reconstruction + lp[i]
 
         return reconstruction
 
