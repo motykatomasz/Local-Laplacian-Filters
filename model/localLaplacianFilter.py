@@ -14,6 +14,7 @@ class LocalLaplacianFilter:
         self.mapping = self.getMappingFunction(config['mapping_func'])          # TODO Implement mapping functions
         self.alpha = config['alpha']
         self.beta = config['beta']
+        self.color = config['color_img']
 
 
     def run(self, img: np.ndarray):
@@ -22,6 +23,10 @@ class LocalLaplacianFilter:
         :param img: Input image
         :return:
         """
+
+        if self.color:
+            img, colorRatios = self.computeIntensityImage(img)
+
         gpImg = self.computeGaussianPyramid(img, self.levels)   # Gaussian Pyramid of input image
         lpOut = []                                              # Output Laplacian Pyramid
 
@@ -43,7 +48,7 @@ class LocalLaplacianFilter:
                     for u in range(R.shape[0]):
                         for v in range(R.shape[1]):
                             # apply remapping function on R and assign to R~
-                            R_[u, v] = self.mapping(R[u, v], g, self.sigma)
+                            R_[u, v] = self.mapping(R[u, v], g, self.sigma, self.alpha, self.beta)
                             # R_[u, v] = R[u, v]
 
                     # 9: Intermediate Laplacian pyramid
@@ -60,7 +65,18 @@ class LocalLaplacianFilter:
 
             lpOut.append(lpOutLayer.astype(np.uint8))
 
-        # 12: collapse output pyramid
+        if self.color:
+            # 12: collapse output pyramid
+            reconstruction = self.reconstructLaplacianPyramid(lpOut).astype(np.int)
+
+            # 13: reconstruct color image
+            scaled = reconstruction - reconstruction.max()
+            inverse = np.exp(scaled) * 255
+            colored = [np.multiply(inverse, channel) for channel in colorRatios]
+            colored = np.stack(colored, axis=2)
+
+            return colored
+
         return self.reconstructLaplacianPyramid(lpOut)
 
     def getMappingFunction(self, func: str):
@@ -170,3 +186,21 @@ class LocalLaplacianFilter:
         assert x_img >= a and x_img <= b and y_img >= c and y_img <= d, f"Error: sub-region ({a, c}, {b, c}, {a, d}, {b, d}) does not include the point {x_img, y_img}"
 
         return a, b, c, d
+
+    def computeIntensityImage(self, img):
+        """
+        Computed the intensity image and color ration of a given color image img.
+        :param img: Color image.
+        :return: Tuple of Intensity image and color ratios
+        """
+        img64bit = img.astype(np.int)
+        r = img64bit[:, :, 0]
+        g = img64bit[:, :, 1]
+        b = img64bit[:, :, 2]
+
+        intensityImg = (20*r + 40*g + b) + 1    # +1 to prevent dividing by 0
+        colorRatios = [r/intensityImg, g/intensityImg, b/intensityImg]
+
+        # TODO uint8 type is needed for cv2.pyrUP/Down function but it's a problem when opearting with log(img).
+        # TODO We probably have to implement cv2.pyrUP/Down ourselves.
+        return np.log(intensityImg).astype(np.uint8), colorRatios
