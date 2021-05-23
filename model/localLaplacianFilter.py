@@ -48,8 +48,8 @@ class LocalLaplacianFilter:
                     for u in range(R.shape[0]):
                         for v in range(R.shape[1]):
                             # apply remapping function on R and assign to R~
-                            R_[u, v] = self.mapping(R[u, v], g, self.sigma, self.alpha, self.beta)
-                            # R_[u, v] = R[u, v]
+                            # R_[u, v] = self.mapping(R[u, v], g, self.sigma, self.alpha, self.beta)
+                            R_[u, v] = R[u, v]
 
                     # 9: Intermediate Laplacian pyramid
                     lpIntermediate = self.computeLaplacianPyramid(R_, self.levels)
@@ -203,6 +203,4 @@ class LocalLaplacianFilter:
         # TODO uint8 type is needed for cv2.pyrUP/Down function but it's a problem when opearting with log(img).
         # TODO We probably have to implement cv2.pyrUP/Down ourselves.
 
-        l = np.log(intensityImg)
-        l8 = l.astype(np.uint8)
         return np.log(intensityImg).astype(np.uint8), colorRatios
