@@ -25,6 +25,8 @@ class LocalLaplacianFilter:
         gpImg = self.computeGaussianPyramid(img, self.levels)   # Gaussian Pyramid of input image
         lpOut = []                                              # Output Laplacian Pyramid
 
+        lp = self.computeLaplacianPyramid(img, self.levels)
+
         for l, gpLayer in enumerate(gpImg):
             h, w = gpLayer.shape
             lpOutLayer = np.zeros(shape=(h, w))
@@ -41,7 +43,7 @@ class LocalLaplacianFilter:
                     lpIntermediate = self.computeLaplacianPyramid(intermediateImg, self.levels)     # Intermediate Laplacian pyramid
                     lpOutLayer[x, y] = lpIntermediate[l][x, y]
 
-            lpOut.append(lpOutLayer)
+            lpOut.append(lpOutLayer.astype(np.uint8))
 
         return self.reconstructLaplacianPyramid(lpOut)
 
