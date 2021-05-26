@@ -25,27 +25,26 @@ class LocalLaplacianFilter:
         gpImg = self.computeGaussianPyramid(img, self.levels)   # Gaussian Pyramid of input image
         lpOut = []                                              # Output Laplacian Pyramid
 
-        lp = self.computeLaplacianPyramid(img, self.levels)
-
         for l, gpLayer in enumerate(gpImg):
             h, w = gpLayer.shape
             lpOutLayer = np.zeros(shape=(h, w))
-            for y in range(h):
-                for x in range(w):
-                    g = gpLayer[y, x]
+            for x in range(h):
+                for y in range(w):
+                    g = gpLayer[x, y]
 
                     # get sub-region R
-                    a, b, c, d = self.subregion(l, y, x, img.shape[0], img.shape[1])
-                    R = img[c:d+1, a:b+1]
-                    
+                    a, b, c, d = self.subregion(l, x, y, img.shape[0], img.shape[1])
+                    R = img[a:b, c:d]
+
                     # make R~ same size as R
                     R_ = np.zeros_like(R)
 
                     # iterate through pixels of R
-                    for u in range(R.shape[1]):
-                        for v in range(R.shape[0]):
+                    for u in range(R.shape[0]):
+                        for v in range(R.shape[1]):
                             # apply remapping function on R and assign to R~
                             R_[u, v] = self.mapping(R[u, v], g, self.sigma)
+                            # R_[u, v] = R[u, v]
 
                     # 9: Intermediate Laplacian pyramid
                     lpIntermediate = self.computeLaplacianPyramid(R_, self.levels)
@@ -57,7 +56,7 @@ class LocalLaplacianFilter:
                     # adjust for the current level of the pyramid
                     x_sub_l = np.floor(x_sub/2**l).astype(np.int)
                     y_sub_l = np.floor(y_sub/2**l).astype(np.int)
-                    lpOutLayer[y, x] = lpIntermediate[l][y_sub_l, x_sub_l]
+                    lpOutLayer[x, y] = lpIntermediate[l][x_sub_l, y_sub_l]
 
             lpOut.append(lpOutLayer.astype(np.uint8))
 
@@ -127,7 +126,7 @@ class LocalLaplacianFilter:
         return reconstruction
 
 
-    def subregion(self, l: int, y: int, x: int, h_img: int, w_img: int):
+    def subregion(self, l: int, x: int, y: int, h_img: int, w_img: int):
         """
         Computes the subregion R of original image based on level 'l' and position (x,y).
         :return: Tuple of 4 integers where:
@@ -140,18 +139,34 @@ class LocalLaplacianFilter:
         """
         # define the size of sub-region according to section 4
         # try to define a kxk region around x, y
-        k = 3*2**(l+2) - 3
+        k = 4*2**(l+2)
 
         # x,y coords corresponding to the original image
         x_img = x*2**l
         y_img = y*2**l
 
         # starts and ends  in x and y direction
-        a = np.maximum(x_img - k, 0)
-        b = np.minimum(w_img, x_img + k)
-        c = np.maximum(y_img - k, 0)
-        d = np.minimum(h_img, y_img + k)
+        # always make sure subregion will be power of 2, even in border cases
+        if x_img - k//2 < 0:
+            a = 0
+            b = k
+        elif x_img + k//2 > w_img:
+            a = w_img - k
+            b = w_img
+        else:
+            a = x_img - k//2
+            b = x_img + k//2
 
-        assert x >= a and x <= b and y >= c and y <= d, f"Error: sub-region ({a, c}, {b, c}, {a, d}, {b, d}) does not include the point {x, y}"
+        if y_img - k//2 < 0:
+            c = 0
+            d = k
+        elif y_img + k//2 > h_img:
+            c = h_img - k
+            d = h_img
+        else:
+            c = y_img - k//2
+            d = y_img + k//2
+
+        assert x_img >= a and x_img <= b and y_img >= c and y_img <= d, f"Error: sub-region ({a, c}, {b, c}, {a, d}, {b, d}) does not include the point {x_img, y_img}"
 
         return a, b, c, d
