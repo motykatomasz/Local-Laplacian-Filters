@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def grayscaleR(i, g, sigma):
+def grayscaleR(i, g, sigma, alpha, beta):
     """
     Remapping function for gray-scale images.
     :param i: Image pixel value.
@@ -14,9 +14,9 @@ def grayscaleR(i, g, sigma):
     g = g.astype(np.int)
 
     if np.abs(i-g) <= sigma:
-        return _grayscaleRd(i, g, sigma).astype(np.uint8)
+        return _grayscaleRd(i, g, sigma, alpha).astype(np.uint8)
     else:
-        return _grayscaleRe(i, g, sigma).astype(np.uint8)
+        return _grayscaleRe(i, g, sigma, beta).astype(np.uint8)
 
 
 def colorR(i, g, sigma):
@@ -43,23 +43,23 @@ def colorR(i, g, sigma):
 
 
 # TODO
-def _grayscaleRd(i, g, sigma):
+def _grayscaleRd(i, g, sigma, alpha):
     """
     Remapping function for gray-scale images.
     :return:
     """
-    return g + np.sign(i-g) * sigma * _fd(np.abs(i-g)/sigma)
+    return g + np.sign(i-g) * sigma * _fd(np.abs(i-g)/sigma, alpha)
 
 
-def _grayscaleRe(i, g, sigma):
+def _grayscaleRe(i, g, sigma, beta):
     """
     Remapping function for gray-scale images.
     :return:
     """
-    return g + np.sign(i-g) * (_fe(np.abs(i-g)-sigma) + sigma)
+    return g + np.sign(i-g) * (_fe(np.abs(i-g)-sigma, beta) + sigma)
 
 
-def _colorRd(i, g, sigma):
+def _colorRd(i, g, sigma, alpha):
     """
     Remapping function for color images.
     :return:
@@ -69,10 +69,10 @@ def _colorRd(i, g, sigma):
     else:
         unit = (i-g)/np.linalg.norm(i-g)
 
-    return g + unit * sigma * _fd(np.linalg.norm(i-g)/sigma)
+    return g + unit * sigma * _fd(np.linalg.norm(i-g)/sigma, alpha)
 
 
-def _colorRe(i, g, sigma):
+def _colorRe(i, g, sigma, beta):
     """
     Remapping function for color images.
     :return:
@@ -82,24 +82,23 @@ def _colorRe(i, g, sigma):
     else:
         unit = (i-g)/np.linalg.norm(i-g)
 
-    return g + unit * (_fe(np.linalg.norm(i-g)-sigma) + sigma)
+    return g + unit * (_fe(np.linalg.norm(i-g)-sigma, beta) + sigma)
 
 
-def _fd(i):
+def _fd(i, alpha):
     """
     Smooth detail mapping for Detail Manipulation (5.2 in the paper)
     :param i: Value to map
     :return: Mapped value
     """
-    _alpha = 0.8
-    return np.power(i, _alpha)
+    return np.power(i, alpha)
 
 
 # TODO
-def _fe(i):
+def _fe(i, beta):
     """
     Smooth edge mapping for Detail Manipulation (5.2 in the paper)
     :param i: Value to map
     :return: Mapped value
     """
-    return i
+    return beta * i

@@ -6,7 +6,8 @@ from model import LocalLaplacianFilter
 
 # Input parameters
 config = OrderedDict(
-    img_path='data/lena_gray_32.png',
+    img_path='data/0.png',
+    color_img=True,
     mapping_func='grayscale',
     levels=3,
     sigma=1.0,
@@ -17,7 +18,7 @@ config = OrderedDict(
 
 def main():
 
-    img = readImage(config['img_path'])
+    img = readImage(config['img_path'], config['color_img'])
 
     algorithm = LocalLaplacianFilter(config)
 
