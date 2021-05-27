@@ -1,7 +1,10 @@
 import cv2
 import numpy as np
+import SharedArray
 
 from .mappings import grayscaleR, colorR
+
+from multiprocessing import Process, Manager
 
 
 class LocalLaplacianFilter:
@@ -11,11 +14,12 @@ class LocalLaplacianFilter:
     def __init__(self, config: dict):
         self.levels = config['levels']
         self.sigma = config['sigma']
-        self.mapping = self.getMappingFunction(config['mapping_func'])          # TODO Implement mapping functions
+        self.mapping = self.getMappingFunction(config['mapping_func'])
         self.alpha = config['alpha']
         self.beta = config['beta']
         self.color = config['color_img']
         self.use_intensity = config['intensity_img']
+        self.numProcesses = config['num_processes']
 
     def run(self, img: np.ndarray):
         """
@@ -35,43 +39,43 @@ class LocalLaplacianFilter:
                 gpImg[i] = np.reshape(gpLayer, (gpLayer.shape[0], gpLayer.shape[1], 1))
 
         for l, gpLayer in enumerate(gpImg):
+            print('Processing layer {}'.format(l))
             h, w, num_channels = gpLayer.shape
-            lpOutLayer = np.zeros(shape=(h, w, num_channels))
-            for x in range(h):
-                for y in range(w):
-                    g = gpLayer[x, y]
 
-                    # get sub-region R
-                    a, b, c, d = self.subregion(l, x, y, img.shape[0], img.shape[1])
-                    R = img[a:b, c:d]
+            # Create ndarray object in shared memory
+            # I'm using this package to share ndarray https://pypi.org/project/SharedArray/
+            name = 'layer' + str(l)
+            for a in SharedArray.list():
+                if a.name.decode("utf-8") == name:
+                    SharedArray.delete(name)
+            lpOutLayer = SharedArray.create('shm://' + name, (h, w, num_channels))
 
-                    # make R~ same size as R
-                    R_ = np.zeros_like(R)
+            # Put shared read-only arguments to one namespace
+            mgr = Manager()
+            ns = mgr.Namespace()
+            ns.l = l
+            ns.w = w
+            ns.img = img
+            ns.gpLayer = gpLayer
 
-                    # iterate through pixels of R
-                    for u in range(R.shape[0]):
-                        for v in range(R.shape[1]):
-                            # apply remapping function on R and assign to R~
-                            R_[u, v] = self.mapping(R[u, v], g, self.sigma, self.alpha, self.beta)
-                            # R_[u, v] = R[u, v]
+            # Compute chunks of image
+            ranges = self._computeChunksOfData(self.numProcesses, h)
 
-                    # 9: Intermediate Laplacian pyramid
-                    lpIntermediate = self.computeLaplacianPyramid(R_, self.levels)
-                    # 10: Update output pyramid
+            processes = []
+            for i in range(self.numProcesses):
+                p = Process(target=self.computeSingleValue, args=(ranges[i], ns, lpOutLayer))
+                processes.append(p)
+                p.start()
 
-                    # x,y position in original image offset by location of subregion
-                    x_sub = x*2**l - a
-                    y_sub = y*2**l - c
-                    # adjust for the current level of the pyramid
-                    x_sub_l = np.floor(x_sub/2**l).astype(np.int)
-                    y_sub_l = np.floor(y_sub/2**l).astype(np.int)
-                    lpOutLayer[x, y] = lpIntermediate[l][x_sub_l, y_sub_l]
+            for p in processes:
+                p.join()
 
             lpOut.append(lpOutLayer.squeeze())
 
-        if self.use_intensity is True:
+        if self.use_intensity:
             # 12: collapse output pyramid
             reconstruction = self.reconstructLaplacianPyramid(lpOut)
+            self._clearSharedMemory()
             # 13: reconstruct color image
             scaled = reconstruction - reconstruction.max()
             inverse = np.exp(scaled)
@@ -80,7 +84,38 @@ class LocalLaplacianFilter:
 
             return colored
 
-        return self.reconstructLaplacianPyramid(lpOut)*255
+        reconstruction = self.reconstructLaplacianPyramid(lpOut)*255
+        self._clearSharedMemory()
+
+        return reconstruction
+
+    def _computeChunksOfData(self, numProcesses: int, h: int):
+        """
+        Computed the ranges of rows for each process.
+        :param numProcesses: Number of processes.
+        :param h: Number of rows.
+        :return: List of ranges.
+        """
+        ranges = []
+        rowsPerProcess = np.ceil(h/numProcesses)
+        for i in range(numProcesses):
+            start = i * rowsPerProcess
+            end = (i + 1) * rowsPerProcess
+            if end > h:
+                end = h
+
+            ranges.append((int(start), int(end)))
+
+        return ranges
+
+    def _clearSharedMemory(self):
+        """
+        Clears layers of the final laplacian pyramid from shared memory.
+        :return:
+        """
+        for l in range(self.levels):
+            name = 'layer' + str(l)
+            SharedArray.delete(name)
 
     def getMappingFunction(self, func: str):
         """
@@ -204,3 +239,42 @@ class LocalLaplacianFilter:
         colorRatios = [r/intensityImg, g/intensityImg, b/intensityImg]
 
         return np.log(intensityImg), colorRatios
+
+
+    def computeSingleValue(self, r, ns, lpOutLayer):
+        """
+        Computes single value at location (x,y) at layer l.
+        :param r: Range of rows. Each process get different range of rows of the gaussian pyramid layer.
+        :param ns: Namespace containing read-only shared data
+        :param lpOutLayer: Output layer of laplacian pyramid. Shared between processes.
+        :return:
+        """
+        for x in range(r[0], r[1]):
+            for y in range(ns.w):
+                g = ns.gpLayer[x, y]
+
+                # get sub-region R
+                a, b, c, d = self.subregion(ns.l, x, y, ns.img.shape[0], ns.img.shape[1])
+                R = ns.img[a:b, c:d]
+
+                # make R~ same size as R
+                R_ = np.zeros_like(R)
+
+                # iterate through pixels of R
+                for u in range(R.shape[0]):
+                    for v in range(R.shape[1]):
+                        # apply remapping function on R and assign to R~
+                        R_[u, v] = self.mapping(R[u, v], g, self.sigma, self.alpha, self.beta)
+                        # R_[u, v] = R[u, v]
+
+                # 9: Intermediate Laplacian pyramid
+                lpIntermediate = self.computeLaplacianPyramid(R_, self.levels)
+                # 10: Update output pyramid
+
+                # x,y position in original image offset by location of subregion
+                x_sub = x * 2 ** ns.l - a
+                y_sub = y * 2 ** ns.l - c
+                # adjust for the current level of the pyramid
+                x_sub_l = np.floor(x_sub / 2 ** ns.l).astype(np.int)
+                y_sub_l = np.floor(y_sub / 2 ** ns.l).astype(np.int)
+                lpOutLayer[x, y] = lpIntermediate[ns.l][x_sub_l, y_sub_l]
