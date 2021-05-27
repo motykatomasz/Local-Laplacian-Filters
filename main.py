@@ -6,12 +6,12 @@ from model import LocalLaplacianFilter
 
 # Input parameters
 config = OrderedDict(
-    img_path='data/lena_gray_64.png',
+    img_path='data/lena_gray_32.png',
     mapping_func='grayscale',
     levels=3,
-    sigma=20.0,
-    alpha=0.0,
-    beta=0.0
+    sigma=1.0,
+    alpha=1.0,
+    beta=1.0
 )
 
 
