@@ -68,7 +68,6 @@ class LocalLaplacianFilter:
         if self.color:
             # 12: collapse output pyramid
             reconstruction = self.reconstructLaplacianPyramid(lpOut).astype(np.int)
-
             # 13: reconstruct color image
             scaled = reconstruction - reconstruction.max()
             inverse = np.exp(scaled) * 255
@@ -203,4 +202,7 @@ class LocalLaplacianFilter:
 
         # TODO uint8 type is needed for cv2.pyrUP/Down function but it's a problem when opearting with log(img).
         # TODO We probably have to implement cv2.pyrUP/Down ourselves.
+
+        l = np.log(intensityImg)
+        l8 = l.astype(np.uint8)
         return np.log(intensityImg).astype(np.uint8), colorRatios
