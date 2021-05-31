@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from .mappings import grayscaleR, colorR
-
+from utils import upsample
 
 class LocalLaplacianFilter:
     """
@@ -121,7 +121,7 @@ class LocalLaplacianFilter:
         gpImg.reverse()
         lpImg = [gpImg[0]]
         for i in range(l):
-            GE = cv2.pyrUp(gpImg[i])
+            GE = upsample(gpImg[i])
             L = gpImg[i + 1] - GE
             lpImg.append(L)
         lpImg.reverse()
