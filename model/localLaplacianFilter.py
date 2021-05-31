@@ -15,7 +15,7 @@ class LocalLaplacianFilter:
         self.alpha = config['alpha']
         self.beta = config['beta']
         self.color = config['color_img']
-
+        self.use_intensity = config['intensity_img']
 
     def run(self, img: np.ndarray):
         """
@@ -24,15 +24,19 @@ class LocalLaplacianFilter:
         :return:
         """
 
-        if self.color:
+        if self.use_intensity is True:
             img, colorRatios = self.computeIntensityImage(img)
 
         gpImg = self.computeGaussianPyramid(img, self.levels)   # Gaussian Pyramid of input image
         lpOut = []                                              # Output Laplacian Pyramid
 
+        if self.color is False:
+            for i, gpLayer in enumerate(gpImg):
+                gpImg[i] = np.reshape(gpLayer, (gpLayer.shape[0], gpLayer.shape[1], 1))
+
         for l, gpLayer in enumerate(gpImg):
-            h, w = gpLayer.shape
-            lpOutLayer = np.zeros(shape=(h, w))
+            h, w, num_channels = gpLayer.shape
+            lpOutLayer = np.zeros(shape=(h, w, num_channels))
             for x in range(h):
                 for y in range(w):
                     g = gpLayer[x, y]
@@ -63,9 +67,9 @@ class LocalLaplacianFilter:
                     y_sub_l = np.floor(y_sub/2**l).astype(np.int)
                     lpOutLayer[x, y] = lpIntermediate[l][x_sub_l, y_sub_l]
 
-            lpOut.append(lpOutLayer.astype(np.uint8))
+            lpOut.append(lpOutLayer.squeeze().astype(np.uint8))
 
-        if self.color:
+        if self.use_intensity is True:
             # 12: collapse output pyramid
             reconstruction = self.reconstructLaplacianPyramid(lpOut).astype(np.int)
             # 13: reconstruct color image
@@ -137,7 +141,6 @@ class LocalLaplacianFilter:
         for i in range(1, l):
             reconstruction = cv2.pyrUp(reconstruction)
             reconstruction = reconstruction + lp[i]
-
         return reconstruction
 
 
@@ -198,6 +201,7 @@ class LocalLaplacianFilter:
         b = img64bit[:, :, 2]
 
         intensityImg = (20*r + 40*g + b) + 1    # +1 to prevent dividing by 0
+        intensityImg = intensityImg[:, :, np.newaxis]
         colorRatios = [r/intensityImg, g/intensityImg, b/intensityImg]
 
         # TODO uint8 type is needed for cv2.pyrUP/Down function but it's a problem when opearting with log(img).

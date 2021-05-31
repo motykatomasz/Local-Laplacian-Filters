@@ -20,6 +20,19 @@ def readImage(imgPath: str, color: bool):
     return img
 
 
+def writeImage(img: np.array, imgPath: str, color: bool):
+    """
+    Reads the image at specific path.
+    :param imgPath: Path to the image.
+    :return: None
+    """
+    if color:
+        img = cv2.imwrite(imgPath, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+    else:
+        print(np.squeeze(img).shape)
+        img = cv2.imwrite(imgPath, np.squeeze(img))
+
+
 def showImg(img):
     """
     Shows the image 'img'.

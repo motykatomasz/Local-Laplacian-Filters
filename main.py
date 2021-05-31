@@ -1,14 +1,18 @@
+import os
+import sys
 import time
 from collections import OrderedDict
 
-from utils import parse_cli_overides, readImage, showImg
+from utils import parse_cli_overides, readImage, writeImage, showImg
 from model import LocalLaplacianFilter
 
 # Input parameters
 config = OrderedDict(
     img_path='data/0.png',
+    out_path='data/0_reconstructed.png',
     color_img=True,
-    mapping_func='grayscale',
+    intensity_img=False,
+    mapping_func='color',
     levels=3,
     sigma=1.0,
     alpha=1.0,
@@ -27,8 +31,8 @@ def main():
     end = time.time()
 
     print('Algorithm ran for: {:.4f} seconds.'.format(end - start), flush=True)
-
-    showImg(new_img)
+    
+    writeImage(new_img, config['out_path'], config['color_img'])
 
 
 if __name__ == "__main__":
