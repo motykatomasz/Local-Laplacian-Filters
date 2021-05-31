@@ -19,7 +19,7 @@ def grayscaleR(i, g, sigma, alpha, beta):
         return _grayscaleRe(i, g, sigma, beta).astype(np.uint8)
 
 
-def colorR(i, g, sigma):
+def colorR(i, g, sigma, alpha, beta):
     """
         Remapping function for color images.
     :param i:
@@ -37,9 +37,9 @@ def colorR(i, g, sigma):
     # eq for points inside sphere: sqrt((x-cx)^2 + (y-cy)^2 + (z-cz)^2) <= R^2
     # (cx, cy, cz) is center
     if np.linalg.norm(i-g) <= np.sqrt(sigma):
-        _colorRd(i, g, sigma).astype(np.uint8)
+        return _colorRd(i, g, sigma, alpha).astype(np.uint8)
     else:
-        _colorRe(i, g, sigma).astype(np.uint8)
+        return _colorRe(i, g, sigma, beta).astype(np.uint8)
 
 
 # TODO

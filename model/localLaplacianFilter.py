@@ -164,19 +164,19 @@ class LocalLaplacianFilter:
         # always make sure subregion will be power of 2, even in border cases
         if x_img - k//2 < 0:
             a = 0
-            b = k
-        elif x_img + k//2 > w_img:
-            a = w_img - k
-            b = w_img
+            b = min(k, h_img)
+        elif x_img + k//2 > h_img:
+            a = max(h_img - k, 0)
+            b = h_img
         else:
             a = x_img - k//2
             b = x_img + k//2
 
         if y_img - k//2 < 0:
             c = 0
-            d = k
-        elif y_img + k//2 > h_img:
-            c = h_img - k
+            d = min(k, w_img)
+        elif y_img + k//2 > w_img:
+            c = max(w_img - k, 0)
             d = h_img
         else:
             c = y_img - k//2
