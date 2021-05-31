@@ -8,11 +8,11 @@ from model import LocalLaplacianFilter
 
 # Input parameters
 config = OrderedDict(
-    img_path='data/0.png',
-    out_path='data/0_reconstructed.png',
-    color_img=True,
+    img_path='data/lena_gray_32.png',
+    out_path='data/lena_gray_32_reconstructed.png',
+    color_img=False,
     intensity_img=False,
-    mapping_func='color',
+    mapping_func='grayscale',   # 'color' or 'grayscale'
     levels=3,
     sigma=1.0,
     alpha=1.0,

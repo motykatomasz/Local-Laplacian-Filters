@@ -10,13 +10,10 @@ def grayscaleR(i, g, sigma, alpha, beta):
     :return:
     """
 
-    i = i.astype(np.int)
-    g = g.astype(np.int)
-
     if np.abs(i-g) <= sigma:
-        return _grayscaleRd(i, g, sigma, alpha).astype(np.uint8)
+        return _grayscaleRd(i, g, sigma, alpha)
     else:
-        return _grayscaleRe(i, g, sigma, beta).astype(np.uint8)
+        return _grayscaleRe(i, g, sigma, beta)
 
 
 def colorR(i, g, sigma, alpha, beta):
@@ -27,19 +24,15 @@ def colorR(i, g, sigma, alpha, beta):
     :param sigma:
     :return:
     """
-
-    i = i.astype(np.int)
-    g = g.astype(np.int)
-
     # Eq 3a, 3b:
     # details are within sphere of radius sigma centered at g
     # edges are outside sphere
     # eq for points inside sphere: sqrt((x-cx)^2 + (y-cy)^2 + (z-cz)^2) <= R^2
     # (cx, cy, cz) is center
     if np.linalg.norm(i-g) <= np.sqrt(sigma):
-        return _colorRd(i, g, sigma, alpha).astype(np.uint8)
+        return _colorRd(i, g, sigma, alpha)
     else:
-        return _colorRe(i, g, sigma, beta).astype(np.uint8)
+        return _colorRe(i, g, sigma, beta)
 
 
 # TODO
