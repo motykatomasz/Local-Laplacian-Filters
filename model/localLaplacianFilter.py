@@ -58,11 +58,16 @@ class LocalLaplacianFilter:
             ns.img = img
             ns.gpLayer = gpLayer
 
+            if h < self.numProcesses:
+                numProcesses = h
+            else:
+                numProcesses = self.numProcesses
+
             # Compute chunks of image
-            ranges = self._computeChunksOfData(self.numProcesses, h)
+            ranges = self._computeChunksOfData(numProcesses, h)
 
             processes = []
-            for i in range(self.numProcesses):
+            for i in range(numProcesses):
                 p = Process(target=self.computeSingleValue, args=(ranges[i], ns, lpOutLayer))
                 processes.append(p)
                 p.start()
@@ -251,7 +256,7 @@ class LocalLaplacianFilter:
         """
         for x in range(r[0], r[1]):
             for y in range(ns.w):
-                g = ns.gpLayer[x, y]
+                g = ns.gpLayer[x, y][0]
 
                 # get sub-region R
                 a, b, c, d = self.subregion(ns.l, x, y, ns.img.shape[0], ns.img.shape[1])
