@@ -1,5 +1,3 @@
-import os
-import sys
 import time
 from collections import OrderedDict
 
@@ -8,22 +6,22 @@ from model import LocalLaplacianFilter
 
 # Input parameters
 config = OrderedDict(
-    img_path='data/0.png',
-    out_path='data/0_reconstructed.png',
+    img_path='data/flower_cropped_128.png',
+    out_path='data/flower_cropped_128_reconstructed.png',
     color_img=True,
-    intensity_img=False,
-    mapping_func='color',   # 'color' or 'grayscale'
-    levels=3,
-    sigma=1.0,
-    alpha=1.0,
+    intensity_img=True,
+    mapping_func='grayscale',   # 'color' or 'grayscale'
+    levels=4,
+    sigma=0.3,
+    alpha=0.25,
     beta=1.0,
-    num_processes=4 # Keep in mind the number of processes should be higher than number of rows in the lowest layer
+    num_processes=16
 )
 
 
 def main():
 
-    img = readImage(config['img_path'], config['color_img'])
+    img = readImage(config['img_path'], config['color_img'])/255
 
     algorithm = LocalLaplacianFilter(config)
 

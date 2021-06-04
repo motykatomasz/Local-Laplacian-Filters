@@ -240,7 +240,7 @@ class LocalLaplacianFilter:
         g = img64bit[:, :, 1]
         b = img64bit[:, :, 2]
 
-        intensityImg = ((20*r + 40*g + b) + 0.01) / 61# +1 to prevent dividing by 0
+        intensityImg = ((20*r + 40*g + b) + 0.01) / 61 # +0.01 to prevent dividing by 0
         colorRatios = [r/intensityImg, g/intensityImg, b/intensityImg]
 
         return np.log(intensityImg), colorRatios
