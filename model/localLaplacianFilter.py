@@ -30,7 +30,7 @@ class LocalLaplacianFilter:
         gpImg = self.computeGaussianPyramid(img, self.levels)   # Gaussian Pyramid of input image
         lpOut = []                                              # Output Laplacian Pyramid
 
-        if self.color is False:
+        if self.color is False or self.use_intensity is True:
             for i, gpLayer in enumerate(gpImg):
                 gpImg[i] = np.reshape(gpLayer, (gpLayer.shape[0], gpLayer.shape[1], 1))
 
@@ -71,16 +71,16 @@ class LocalLaplacianFilter:
 
         if self.use_intensity is True:
             # 12: collapse output pyramid
-            reconstruction = self.reconstructLaplacianPyramid(lpOut).astype(np.int)
+            reconstruction = self.reconstructLaplacianPyramid(lpOut)
             # 13: reconstruct color image
             scaled = reconstruction - reconstruction.max()
-            inverse = np.exp(scaled) * 255
+            inverse = np.exp(scaled)
             colored = [np.multiply(inverse, channel) for channel in colorRatios]
-            colored = np.stack(colored, axis=2)
+            colored = np.stack(colored, axis=2) * 255
 
             return colored
 
-        return self.reconstructLaplacianPyramid(lpOut)
+        return self.reconstructLaplacianPyramid(lpOut)*255
 
     def getMappingFunction(self, func: str):
         """
@@ -195,13 +195,12 @@ class LocalLaplacianFilter:
         :param img: Color image.
         :return: Tuple of Intensity image and color ratios
         """
-        img64bit = img.astype(np.int)
+        img64bit = img
         r = img64bit[:, :, 0]
         g = img64bit[:, :, 1]
         b = img64bit[:, :, 2]
 
-        intensityImg = (20*r + 40*g + b) + 1    # +1 to prevent dividing by 0
-        intensityImg = intensityImg[:, :, np.newaxis]
+        intensityImg = ((20*r + 40*g + b) + 0.01) / 61# +1 to prevent dividing by 0
         colorRatios = [r/intensityImg, g/intensityImg, b/intensityImg]
 
         return np.log(intensityImg), colorRatios
