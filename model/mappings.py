@@ -27,9 +27,9 @@ def colorR(i, g, sigma, alpha, beta):
     # Eq 3a, 3b:
     # details are within sphere of radius sigma centered at g
     # edges are outside sphere
-    # eq for points inside sphere: sqrt((x-cx)^2 + (y-cy)^2 + (z-cz)^2) <= R^2
+    # eq for points inside sphere: sqrt((x-cx)^2 + (y-cy)^2 + (z-cz)^2) <= R
     # (cx, cy, cz) is center
-    if np.linalg.norm(i-g) <= np.sqrt(sigma):
+    if np.linalg.norm(i-g) <= sigma:
         return _colorRd(i, g, sigma, alpha)
     else:
         return _colorRe(i, g, sigma, beta)
