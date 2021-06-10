@@ -11,7 +11,10 @@ def readImage(imgPath: str, color: bool):
     """
     if color:
         # OpenCV reads image in BGR format. We convert it to RGB to be consistent with other libraries
-        img = cv2.imread(imgPath, cv2.IMREAD_COLOR)[..., ::-1].astype(np.float)
+        if imgPath.split('.')[1] == 'hdr':
+            img = cv2.imread(imgPath, cv2.IMREAD_ANYCOLOR)[..., ::-1].astype(np.float)
+        else:
+            img = cv2.imread(imgPath, cv2.IMREAD_COLOR)[..., ::-1].astype(np.float)
     else:
         img = cv2.imread(imgPath, cv2.IMREAD_GRAYSCALE).astype(np.float)
     if img is None:
@@ -26,6 +29,7 @@ def writeImage(img: np.array, imgPath: str, color: bool):
     :param imgPath: Path to the image.
     :return: None
     """
+    img = np.clip(img, 0, 255).astype('uint8')
     if color:
         img = cv2.imwrite(imgPath, img[..., ::-1])
     else:
