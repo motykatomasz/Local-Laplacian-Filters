@@ -27,4 +27,6 @@ Reproduction of the paper "Local Laplacian filters: edge-aware image processing 
 --levels 5 --sigma 0.4 --alpha 1.0 --beta 0.5 --num_processes 16*
 
 
+### Exemplary results (Detail manipulation):
+![name-of-you-image](https://github.com/motykatomasz/Local-Laplacian-Filters/blob/main/results/example_detail_enhancement.png?raw=true)
 
